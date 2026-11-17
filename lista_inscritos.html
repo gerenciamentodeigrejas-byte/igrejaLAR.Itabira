@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscritos - Curso de Maquiagem</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        /* Cabeçalho */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            color: var(--text-main);
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .btn-voltar {
+            background-color: white;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-voltar:hover { background-color: #e5e7eb; }
+
+        /* Barra de Ferramentas */
+        .toolbar {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px 12px 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+
+        .counter {
+            background-color: #e0e7ff;
+            color: #3730a3;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        /* Tabela */
+        .table-container {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8fafc;
+            padding: 15px 20px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 15px;
+            vertical-align: middle;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f9fafb; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status-pendente { background-color: #fef3c7; color: #92400e; }
+        .status-pago { background-color: #d1fae5; color: #065f46; }
+
+        /* Select de Status */
+        .status-select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-size: 13px;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+            max-width: 130px;
+        }
+
+        .status-select.pendente { background-color: #fffbeb; color: #92400e; border-color: #fcd34d; }
+        .status-select.pago { background-color: #ecfdf5; color: #065f46; border-color: #6ee7b7; }
+        
+        .status-select:focus {
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        /* Loading e Vazio */
+        .loading, .empty {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .header { flex-direction: column; align-items: flex-start; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            th { font-size: 11px; padding: 10px; }
+            td { font-size: 13px; padding: 10px; }
+            .status-select { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Cabeçalho -->
+        <div class="header">
+            <div>
+                <h1>Lista de Inscritos</h1>
+                <p>Curso de Maquiagem - Igreja LAR Itabira</p>
+            </div>
+            <a href="inscricao_culto.html" class="btn-voltar">
+                &larr; Voltar para Inscrição
+            </a>
+        </div>
+
+        <!-- Ferramentas -->
+        <div class="toolbar">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="inputBusca" placeholder="Buscar inscrito pelo nome..." oninput="filtrarInscritos()">
+            </div>
+            <div class="counter" id="contadorInscritos">Carregando...</div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-container">
+            <table id="tabelaInscritos">
+                <thead>
+                    <tr>
+                        <th>Nome Completo</th>
+                        <th>Idade</th>
+                        <th>Status</th>
+                        <th>Data da Inscrição</th>
+                        <th style="text-align: center;">Alterar Status</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela">
+                    <tr>
+                        <td colspan="5" class="loading">Carregando inscritos...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONEXÃO COM O SUPABASE
+        // ==========================================
+        let supabaseClient;
+        if (typeof db !== 'undefined') {
+            supabaseClient = db;
+        } else {
+            const SUPABASE_URL = "COLOQUE_SUA_URL_AQUI"; 
+            const SUPABASE_ANON_KEY = "COLOQUE_SUA_CHAVE_ANON_AQUI";
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
+        let listaInscritos = [];
+        const ID_EVENTO = 1; // Trava a página para o evento 1
+
+        // 1. Carregar os inscritos
+        async function carregarInscritos() {
+            const corpoTabela = document.getElementById('corpoTabela');
+            const contador = document.getElementById('contadorInscritos');
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('gerencimanto_igreja_inscritos')
+                    .select('*')
+                    .eq('evento_id', ID_EVENTO)
+                    .order('nome_completo', { ascending: true });
+
+                if (error) throw error;
+
+                listaInscritos = data || [];
+                
+                contador.textContent = `${listaInscritos.length} inscrita${listaInscritos.length !== 1 ? 's' : ''}`;
+                
+                renderizarTabela(listaInscritos);
+
+            } catch (error) {
+                console.error("Erro ao carregar inscritos:", error);
+                corpoTabela.innerHTML = `<tr><td colspan="5" class="empty" style="color: #ef4444;">Erro ao carregar os dados. Verifique a conexão.</td></tr>`;
+                contador.textContent = "Erro";
+            }
+        }
+
+        // 2. Renderizar a tabela
+        function renderizarTabela(inscritos) {
+            const corpoTabela = document.getElementById('corpoTabela');
+
+            if (inscritos.length === 0) {
+                corpoTabela.innerHTML = `<tr><td colspan="5" class="empty">Nenhuma inscrição realizada até o momento.</td></tr>`;
+                return;
+            }
+
+            corpoTabela.innerHTML = inscritos.map(inscrito => {
+                const dataObj = new Date(inscrito.created_at);
+                const dataFormatada = dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + 
+                                      ' às ' + 
+                                      dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                const isPago = inscrito.status_pagamento === 'Pago';
+                const statusClass = isPago ? 'status-pago' : 'status-pendente';
+                const statusText = inscrito.status_pagamento || 'Pendente';
+                
+                const selectClass = isPago ? 'pago' : 'pendente';
+
+                return `
+                    <tr>
+                        <td><strong>${inscrito.nome_completo}</strong></td>
+                        <td>${inscrito.idade} anos</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>${dataFormatada}</td>
+                        <td style="text-align: center;">
+                            <select 
+                                class="status-select ${selectClass}" 
+                                onchange="alterarStatus(${inscrito.id}, this.value, this)"
+                            >
+                                <option value="Pendente" ${!isPago ? 'selected' : ''}>Pendente</option>
+                                <option value="Pago" ${isPago ? 'selected' : ''}>Pago</option>
+                            </select>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 3. Alterar o Status direto pelo Select
+        async function alterarStatus(id, novoStatus, selectElement) {
+            // Muda a cor do select na hora para dar feedback visual
+            if (novoStatus === 'Pago') {
+                selectElement.className = 'status-select pago';
+            } else {
+                selectElement.className = 'status-select pendente';
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('gerencimanto_igreja_inscritos')
+                    .update({ status_pagamento: novoStatus })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                // Atualiza a etiqueta (badge) ao lado sem recarregar a página inteira
+                const tr = selectElement.closest('tr');
+                const badge = tr.querySelector('.status-badge');
+                
+                badge.textContent = novoStatus;
+                badge.className = `status-badge ${novoStatus === 'Pago' ? 'status-pago' : 'status-pendente'}`;
+
+            } catch (error) {
+                console.error("Erro ao atualizar status:", error);
+                alert("Erro ao atualizar o status: " + error.message);
+                // Se der erro, recarrega para voltar ao estado original
+                carregarInscritos();
+            }
+        }
+
+        // 4. Filtrar pelo campo de busca
+        function filtrarInscritos() {
+            const termo = document.getElementById('inputBusca').value.toLowerCase().trim();
+            
+            if (!termo) {
+                renderizarTabela(listaInscritos);
+                return;
+            }
+
+            const filtrados = listaInscritos.filter(inscrito => 
+                inscrito.nome_completo.toLowerCase().includes(termo)
+            );
+
+            renderizarTabela(filtrados);
+        }
+
+        // Inicializa a página
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarInscritos();
+        });
+    </script>
+</body>
+</html>
